@@ -7,9 +7,12 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentContainerView
 import androidx.viewpager.widget.ViewPager
 import com.example.lab3_vk_control.ui.login.LoginActivity
+import com.vk.api.sdk.VK
+import com.vk.api.sdk.auth.VKAccessToken
+import com.vk.api.sdk.auth.VKAuthCallback
+import com.vk.api.sdk.auth.VKScope
 
 class MainActivity : AppCompatActivity() {
     lateinit var viewPager:ViewPager
@@ -19,13 +22,28 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val btn = findViewById<Button>(R.id.autorizebtn)
         btn.setOnClickListener {
+
             val IntentLog = Intent(this, LoginActivity::class.java)
            startActivity(IntentLog)
         }
-        
+
+    }
 
 
 
+    override fun onBackPressed() {
+        // Получаем текущий фрагмент
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment)
+
+        // Если это фрагмент ChildFragment, переключаемся на ParentFragment
+        if (fragment is userinfoFragment) {
+            val transaction = supportFragmentManager.beginTransaction()
+            transaction.replace(R.id.fragment, ContentFragment())
+            transaction.commit()
+        } else {
+            // Если это Root-фрагмент, просто закрываем активность
+            super.onBackPressed()
+        }
     }
 
 
@@ -33,10 +51,6 @@ class MainActivity : AppCompatActivity() {
 
         return super.onCreateView(name, context, attrs)
 
-    }
-    public fun setPage(page: Int) {
-
-        viewPager.setCurrentItem(page, true)
     }
 
 

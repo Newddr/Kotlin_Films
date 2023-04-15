@@ -8,7 +8,7 @@ import com.squareup.picasso.RequestCreator
 import java.net.URL
 
 
-class VkInfo(s: String, s1: String, image: RequestCreator) {
+class VkInfo(s: String, s1: String, image: String) {
     val name =s
    val timeOnline=s1
     val image = image
