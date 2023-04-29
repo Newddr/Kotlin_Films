@@ -9,13 +9,11 @@ import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 import androidx.viewpager.widget.ViewPager
 import com.example.lab3_vk_control.ui.login.LoginActivity
-import com.vk.api.sdk.VK
-import com.vk.api.sdk.auth.VKAccessToken
-import com.vk.api.sdk.auth.VKAuthCallback
-import com.vk.api.sdk.auth.VKScope
+
 
 class MainActivity : AppCompatActivity() {
     lateinit var viewPager:ViewPager
+
     val fragment = ContentFragment()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
