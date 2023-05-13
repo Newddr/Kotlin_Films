@@ -4,45 +4,113 @@ package com.example.lab3_vk_control
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.*
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.GET
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 
 public var isAutorize = false
 class ContentFragment : Fragment(R.layout.fragment_content) {
 
-    public var listOfFilms = mutableListOf<VkInfo>(VkInfo("фильм 1", 2023,"Описание к фильму 1","https://sun4-22.userapi.com/impg/-tORYHaDV4FVxTcHCBY3FX3UncIqmYqFfuCQ8g/8p3VUzEBGEc.jpg?size=1391x2160&quality=95&sign=78db0f74a592abc89586f519f416cd5a&type=album"))
-
+    public var listOfFilms = mutableListOf<Movie>()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FillDatabaseByFilms()
     }
-    val access_token= "3468c9bf3468c9bf3468c9bf31377bb49d334683468c9bf505a7cf7354ade38097d0157"
+
+    private fun FillDatabaseByFilms()
+    {
+        val retrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+
+        val imdbApi = retrofit.create(ImdbApi::class.java)
+        val call = imdbApi.MovieAllResponse(API_KEY)
+
+        call.enqueue(object : Callback<MovieAllResponse> {
+            @SuppressLint("Range")
+            override fun onResponse(call: Call<MovieAllResponse>, response: Response<MovieAllResponse>) {
+                if (response.isSuccessful) {
+                    val top250MoviesResponse = response.body()
+                    val movies = top250MoviesResponse?.items
+                    if (movies != null) {
+                        databaseHelper = DataBaseHelper(context!!)
+                        for (movie in movies) {
+
+                            // Проверяем, есть ли фильм уже в базе данных
+                            if (!databaseHelper.checkIfMovieExists(movie.id)) {
+
+                                databaseHelper.insertMovie(movie)
+
+                            }
+                        }
+
+                        }
+
+                        databaseHelper.close()
+                    }
+                }
+
+            override fun onFailure(call: Call<MovieAllResponse>, t: Throwable) {
+                val toast = Toast.makeText(context, "Ошибка api запроса", Toast.LENGTH_LONG)
+                toast.show()
+            }
+        })
+
+    }
+    private val API_KEY = "k_yy8967dx"
+    private val BASE_URL = "https://imdb-api.com/"
+    interface ImdbApi {
+        @GET("API/InTheaters/{apiKey}")
+        fun MovieAllResponse(@Path("apiKey") apiKey: String): Call<MovieAllResponse>
+        @GET("API/Title/{apiKey}/{movieId}")
+        fun getMovieDescription(
+            @Path("apiKey") apiKey: String,
+            @Path("movieId") movieId: String,
+            @Query("plot") plot: String = "full"
+        ): Call<MovieDescriptionResponse>
+
+    }
+
+    data class MovieAllResponse(
+        val items: List<Movie>
+    )
+    data class MovieDescriptionResponse(
+        val id: String,
+        val plot: String
+    )
     private lateinit var databaseHelper: DataBaseHelper
-
-
-
 
     @SuppressLint("Range")
     private suspend fun fillist(adapter: RecycleAdapter)  {
         if(this.context!=null) databaseHelper = DataBaseHelper(this.context!!)
         val db = databaseHelper.writableDatabase
-        val cursor = db.rawQuery("SELECT * FROM films", null)
+        val cursor = db.rawQuery("SELECT * FROM movies", null)
         while (cursor.moveToNext()) {
-            val id = cursor.getInt(cursor.getColumnIndex("_id"))
+            val id = cursor.getString(cursor.getColumnIndex("_id"))
             val name = cursor.getString(cursor.getColumnIndex("name"))
-            val year = cursor.getString(cursor.getColumnIndex("year")).toInt()
-            val description = cursor.getString(cursor.getColumnIndex("description"))
+            val year = cursor.getString(cursor.getColumnIndex("year"))
+            val plot = cursor.getString(cursor.getColumnIndex("description"))
             val image = cursor.getString(cursor.getColumnIndex("poster"))
-            val data = VkInfo(name,year,description,image)
+            val data = Movie(id,name, year, image, plot)
             if (adapter != null) {
 
               listOfFilms.add(data)
                 //adapter.addItem(data)
                 adapter.notyy()
             }
-            delay(4000);
+           // delay(4000);
 
 
         }
@@ -61,12 +129,7 @@ class ContentFragment : Fragment(R.layout.fragment_content) {
        recycle.layoutManager = LinearLayoutManager(context)
 
         val container= requireActivity().findViewById<View>(R.id.fragment)
-        //val text= requireActivity().findViewById<TextView>(R.id.LogText)
-//        text.text=fillist().size.toString()
 
-
-//        recycle.adapter = activity?.let { RecycleAdapter(fillist() as MutableList<VkInfo>, it,container) }
-//        recycle.adapter.addItem(VkInfo("fgg",5,"fddg"," "))
         val adapter = activity?.let {
             RecycleAdapter(listOfFilms ,
                 it, container)
@@ -78,14 +141,11 @@ class ContentFragment : Fragment(R.layout.fragment_content) {
                 fillist(adapter)
             };
         }
-//        text.text=recycle.adapter?.itemCount.toString()
+
 
 
     }
 
-
-     public fun changeFragment()
-    {}
 
 }
 

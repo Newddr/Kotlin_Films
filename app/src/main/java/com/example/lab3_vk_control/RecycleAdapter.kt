@@ -19,7 +19,7 @@ import com.example.lab3_vk_control.ui.login.CircleTransform
 import com.squareup.picasso.Picasso
 
 
-class RecycleAdapter(private val names: MutableList<VkInfo>, private val linkActivity: FragmentActivity, private val container:View): RecyclerView.Adapter<RecycleAdapter.MyViewHolder>(){
+class RecycleAdapter(private val names: MutableList<Movie>, private val linkActivity: FragmentActivity, private val container:View): RecyclerView.Adapter<RecycleAdapter.MyViewHolder>(){
 
     val handler = Handler(Looper.getMainLooper())
 
@@ -34,7 +34,7 @@ class RecycleAdapter(private val names: MutableList<VkInfo>, private val linkAct
     }
 
 
-    fun addItem(item:VkInfo) {
+    fun addItem(item: Movie) {
         names.add(item)
         handler.post{
             notifyDataSetChanged()
@@ -56,7 +56,7 @@ class RecycleAdapter(private val names: MutableList<VkInfo>, private val linkAct
 
      override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
 
-            holder.largeTextView.text = names[position].name
+            holder.largeTextView.text = names[position].title
             holder.smallTextView.text = names[position].year.toString()
             Picasso.get()
                 .load(names[position].image)
@@ -66,8 +66,8 @@ class RecycleAdapter(private val names: MutableList<VkInfo>, private val linkAct
             holder.card.setOnClickListener {
 
                 val bitmap = getBitmapFromImageView(holder.imageview)
-                val header = names[position].name
-                val description = names[position].description
+                val header = names[position].title
+                val description = names[position].plot
                 val args = Bundle().apply {
                     putString("name", header)
                     putParcelable("bitmap", bitmap)
