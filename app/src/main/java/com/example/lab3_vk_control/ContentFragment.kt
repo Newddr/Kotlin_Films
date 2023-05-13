@@ -1,29 +1,54 @@
 package com.example.lab3_vk_control
 
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.vk.api.sdk.auth.VKAccessToken
+import kotlinx.coroutines.*
 
 
 public var isAutorize = false
 class ContentFragment : Fragment(R.layout.fragment_content) {
+
+    public var listOfFilms = mutableListOf<VkInfo>(VkInfo("фильм 1", 2023,"Описание к фильму 1","https://sun4-22.userapi.com/impg/-tORYHaDV4FVxTcHCBY3FX3UncIqmYqFfuCQ8g/8p3VUzEBGEc.jpg?size=1391x2160&quality=95&sign=78db0f74a592abc89586f519f416cd5a&type=album"))
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
     val access_token= "3468c9bf3468c9bf3468c9bf31377bb49d334683468c9bf505a7cf7354ade38097d0157"
+    private lateinit var databaseHelper: DataBaseHelper
 
 
 
-    private fun fillist(): List<VkInfo> {
+
+    @SuppressLint("Range")
+    private suspend fun fillist(adapter: RecycleAdapter)  {
+        if(this.context!=null) databaseHelper = DataBaseHelper(this.context!!)
+        val db = databaseHelper.writableDatabase
+        val cursor = db.rawQuery("SELECT * FROM films", null)
+        while (cursor.moveToNext()) {
+            val id = cursor.getInt(cursor.getColumnIndex("_id"))
+            val name = cursor.getString(cursor.getColumnIndex("name"))
+            val year = cursor.getString(cursor.getColumnIndex("year")).toInt()
+            val description = cursor.getString(cursor.getColumnIndex("description"))
+            val image = cursor.getString(cursor.getColumnIndex("poster"))
+            val data = VkInfo(name,year,description,image)
+            if (adapter != null) {
+
+              listOfFilms.add(data)
+                //adapter.addItem(data)
+                adapter.notyy()
+            }
+            delay(4000);
 
 
-        val data = mutableListOf<VkInfo>()
-        (0..15).forEach { i -> data.add(VkInfo("$i element","time","https://sun9-76.userapi.com/impg/znH_e6UVDTypTyN3BKdbZJy16in08u3MsNGzVw/O3PkE6Rq2vM.jpg?size=1620x2160&quality=95&sign=61c61a5b4dbd834a5f6381fbb135d623&type=album"))}
-        return data
+        }
+        cursor.close()
+        databaseHelper.close()
+
 
     }
 
@@ -40,11 +65,25 @@ class ContentFragment : Fragment(R.layout.fragment_content) {
 //        text.text=fillist().size.toString()
 
 
-        recycle.adapter = activity?.let { RecycleAdapter(fillist(), it,container) }
+//        recycle.adapter = activity?.let { RecycleAdapter(fillist() as MutableList<VkInfo>, it,container) }
+//        recycle.adapter.addItem(VkInfo("fgg",5,"fddg"," "))
+        val adapter = activity?.let {
+            RecycleAdapter(listOfFilms ,
+                it, container)
+        }
+        recycle.adapter = adapter
+
+        GlobalScope.launch(Dispatchers.IO) {
+            if (adapter != null) {
+                fillist(adapter)
+            };
+        }
 //        text.text=recycle.adapter?.itemCount.toString()
 
 
     }
+
+
      public fun changeFragment()
     {}
 

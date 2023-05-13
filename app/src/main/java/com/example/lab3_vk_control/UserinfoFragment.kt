@@ -21,6 +21,8 @@ class userinfoFragment: Fragment(R.layout.info_user_fragment) {
         var bitmap= arguments?.getParcelable<Bitmap>("bitmap")
 //        bitmap= bitmap?.let { resizeBitmap(it,1600,1600) }
         image.setImageBitmap(bitmap)
+        var descriprion = requireActivity().findViewById<TextView>(R.id.descriprion)
+        descriprion.text= arguments?.getString("description")
 
 
     }
